@@ -1,0 +1,41 @@
+# ─────────────────────────────────────────────────────────────
+#  Bamboo Housing watcher config
+#  To watch a new search: set your filters on bamboohousing.ca,
+#  copy the URL from the address bar, and add a block below.
+# ─────────────────────────────────────────────────────────────
+
+searches:
+  - name: winter-sublet          # any unique name (used to track what you've seen)
+    url: "https://bamboohousing.ca/homepage?StartTerm=Winter&RoomsAvailable=&Coed=Coed,Female%20Only&LeaseType=4%20Month%20Sublet&Price=&Sort=Recent&pagination=true"
+    enabled: true
+
+    # Optional extra filters applied after scraping (delete or leave blank to ignore)
+    max_price: 1300              # $/month
+    min_price:
+    exclude_keywords: []         # e.g. ["penthouse", "male only"] – matched against title/address
+
+  # Example of a second search — set enabled: true to turn it on
+  - name: spring-sublet
+    url: "https://bamboohousing.ca/homepage?StartTerm=Spring&LeaseType=4%20Month%20Sublet&Sort=Recent&pagination=true"
+    enabled: false
+
+# Where to send alerts. Secrets come from environment variables (never put them in this file).
+notify:
+  discord:
+    enabled: true
+    webhook_env: DISCORD_WEBHOOK_URL
+  email:
+    enabled: false
+    # Reads SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_TO from env
+
+# First time a search runs, just remember what's already posted instead of
+# blasting you with ~30 old listings. You'll get one "now watching" message.
+notify_on_first_run: false
+
+# Open each NEW listing's page to look for bathroom counts (only if the card has a link).
+fetch_details: true
+
+# Optional: if listing cards don't contain links, but you know the URL pattern
+# (open any listing in your browser and look), set it here, e.g.
+# listing_url_template: "https://bamboohousing.ca/listing/{id}"
+listing_url_template:

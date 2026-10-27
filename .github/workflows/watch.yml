@@ -1,0 +1,47 @@
+name: Bamboo watcher
+
+on:
+  schedule:
+    # Every 15 min (off the top of the hour, when GitHub's scheduler is busiest).
+    # Times are UTC. Private repo? Use "7,37 * * * *" (every 30 min) to stay in the free tier.
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch: {}          # lets you click "Run workflow" manually
+
+permissions:
+  contents: write                # needed to commit state/seen.json back
+
+concurrency:
+  group: bamboo-watcher
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Check for new listings
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python watcher.py
+
+      - name: Save seen listings
+        if: always()
+        run: |
+          git config user.name "bamboo-bot"
+          git config user.email "bamboo-bot@users.noreply.github.com"
+          git add state/seen.json || true
+          git diff --cached --quiet || (git commit -m "update seen listings" && git push)
